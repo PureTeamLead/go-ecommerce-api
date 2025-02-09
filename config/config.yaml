@@ -1,0 +1,15 @@
+# TODO: change name of db
+env: "dev" #available envs: "dev", "prod"
+db:
+  db_username: "themaxs"
+  db_password: "1234"
+  db_host: "localhost"
+  db_port: "5432"
+  db_name: "e_commerce"
+app:
+  serv_host: "localhost"
+  serv_port: "7777"
+  serv_username: "banger"
+  serv_password: "4321"
+  rw_timeout: 4s
+  idle_timeout: 60s
