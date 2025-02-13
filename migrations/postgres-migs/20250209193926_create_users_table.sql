@@ -1,11 +1,13 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS users (
-    id SERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY,
     username TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL,
     email TEXT,
-    isAdmin BOOLEAN NOT NULL DEFAULT false
+    isAdmin BOOLEAN NOT NULL DEFAULT false,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP
 );
 -- +goose StatementEnd
 
