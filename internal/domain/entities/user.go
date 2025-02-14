@@ -18,6 +18,8 @@ type User struct {
 	UpdatedAt time.Time
 }
 
+// TODO: implement validation on creating and updating
+
 func NewUser(username string, password string, email string, isAdmin bool) *User {
 	return &User{
 		ID:        uuid.New(),

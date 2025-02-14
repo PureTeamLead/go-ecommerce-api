@@ -6,6 +6,7 @@ import (
 	"eshop/internal/repositories"
 	"eshop/internal/services"
 	httpServer "eshop/internal/transport/http-server"
+	"eshop/internal/transport/http-server/handlers"
 	"eshop/migrations"
 	"eshop/pkg/postgre"
 	"flag"
@@ -23,6 +24,7 @@ func main() {
 	// TODO: write some tests
 	// TODO: use logger only on high level -> delete from repositories, services
 	// TODO: write graceful shutdown
+	// TODO: create aggregates
 
 	flag.Parse()
 	cfg := config.LoadConfig(*configPath)
@@ -48,14 +50,14 @@ func main() {
 
 	// TODO: implement seller in database
 	userRepository := repositories.NewUserRepository(db)
-	//productRepository := repositories.NewProductRepository(db)
+	productRepository := repositories.NewProductRepository(db)
 
-	userService := services.NewUserService(userRepository, logger)
-	//productService := services.NewProductService(productRepository, logger)
+	userService := services.NewUserService(userRepository)
+	productService := services.NewProductService(productRepository)
 
-	userHandler := httpServer.NewUserHandler(userService, logger)
+	handler := handlers.NewHandler(userService, productService, logger)
 	// TODO: construct router, middlewares, routes
 	// TODO: add JWT token
-	r := httpServer.NewRouter(cfg.App, userHandler, logger)
+	r := httpServer.NewRouter(cfg.App, handler, logger)
 	r.Run()
 }

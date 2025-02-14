@@ -1,4 +1,4 @@
 .env
 .idea
 .DS_store
-config.yaml
+config

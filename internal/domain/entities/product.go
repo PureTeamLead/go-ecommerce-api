@@ -17,6 +17,8 @@ type Product struct {
 	UpdatedAt time.Time
 }
 
+// TODO: implement validation on creating and updating
+
 func NewProduct(price float64, name, category string) *Product {
 	return &Product{
 		ID:        uuid.New(),

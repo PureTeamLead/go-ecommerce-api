@@ -16,7 +16,7 @@ type UserRepository interface {
 	Delete(id uuid.UUID) error
 	GetByID(id uuid.UUID) (*entities.User, error)
 	GetAll() ([]entities.User, error)
-	Update(user *entities.User) (*entities.User, error)
+	Update(user *entities.User) error
 }
 
 // TODO: create model(request) to communicate with service
@@ -97,18 +97,17 @@ func (u *userRepository) Delete(id uuid.UUID) error {
 	return nil
 }
 
-func (u *userRepository) Update(user *entities.User) (*entities.User, error) {
+func (u *userRepository) Update(user *entities.User) error {
 	const query = `UPDATE users SET username = $1, password = $2, email = $3, isadmin = $4, updated_at = $5 WHERE id = $6;`
-	updatedUser := entities.UpdateUser(user.ID, user.Username, user.Password, user.Email, user.IsAdmin, user.CreatedAt)
 
-	_, err := u.db.Exec(query, updatedUser.Username, updatedUser.Password, updatedUser.Email,
-		updatedUser.IsAdmin, updatedUser.UpdatedAt, updatedUser.ID)
+	_, err := u.db.Exec(query, user.Username, user.Password, user.Email,
+		user.IsAdmin, user.UpdatedAt, user.ID)
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil, errs.ErrNoUserFound
+		return errs.ErrNoUserFound
 	}
 	if err != nil {
-		return nil, fmt.Errorf("failed to update user: %w", err)
+		return fmt.Errorf("failed to update user: %w", err)
 	}
 
-	return updatedUser, nil
+	return nil
 }

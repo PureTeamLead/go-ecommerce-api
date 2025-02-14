@@ -1,6 +1,7 @@
 package http_server
 
 import (
+	"eshop/internal/transport/http-server/handlers"
 	"fmt"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -18,14 +19,14 @@ type AppConfig struct {
 }
 
 type Router struct {
-	Handler Handler
+	Handler handlers.Handler
 	E       *echo.Echo
 	config  AppConfig
 	logger  *zap.Logger
 	srv     *http.Server
 }
 
-func NewRouter(cfg AppConfig, handler Handler, logger *zap.Logger) *Router {
+func NewRouter(cfg AppConfig, handler handlers.Handler, logger *zap.Logger) *Router {
 	e := echo.New()
 
 	addr := fmt.Sprintf("%s:%s", cfg.Host, cfg.Port)
@@ -50,10 +51,11 @@ func NewRouter(cfg AppConfig, handler Handler, logger *zap.Logger) *Router {
 	//pg.GET("/{id}", GetProductHandler)
 
 	return &Router{
-		E:      e,
-		config: cfg,
-		logger: logger,
-		srv:    srv,
+		E:       e,
+		config:  cfg,
+		logger:  logger,
+		srv:     srv,
+		Handler: handler,
 	}
 }
 
