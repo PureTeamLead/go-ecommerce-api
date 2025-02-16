@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"eshop/internal/infrastructure/errs"
 	"eshop/internal/transport/http-server/dto"
 	"eshop/internal/transport/http-server/dto/requests"
@@ -8,8 +9,6 @@ import (
 	"go.uber.org/zap"
 	"net/http"
 )
-
-// TODO: handle errors like in login
 
 func (h *Handler) UserLogin(e echo.Context) error {
 	logging := h.logger.With(zap.String("Use Case", "Login"))
@@ -22,19 +21,16 @@ func (h *Handler) UserLogin(e echo.Context) error {
 
 	if err := h.usrs.Login(r.ID, r.Username, r.Password); err != nil {
 		switch err {
-		case errs.ErrHashing:
-			logging.Error("hash error", zap.Error(err))
-			return e.JSON(http.StatusInternalServerError, dto.NewErrorResponse(errs.ErrHashing, "Failed to work with password"))
 		case errs.ErrWrongPassword:
 			logging.Error("wrong password", zap.Error(err))
-			return e.JSON(http.StatusBadRequest, dto.NewErrorResponse(errs.ErrWrongPassword, "Wrong password"))
+			return e.JSON(http.StatusUnauthorized, dto.NewErrorResponse(errs.ErrWrongPassword, "Wrong password"))
 		case errs.ErrWrongUsername:
 			logging.Error("wrong username", zap.Error(err))
-			return e.JSON(http.StatusBadRequest, dto.NewErrorResponse(errs.ErrWrongUsername, "Wrong username"))
+			return e.JSON(http.StatusUnauthorized, dto.NewErrorResponse(errs.ErrWrongUsername, "Wrong username"))
 		default:
 			logging.Error("failed on service operation", zap.Error(err))
 			resp := dto.NewErrorResponse(err, "User login failed")
-			return e.JSON(http.StatusUnauthorized, resp)
+			return e.JSON(http.StatusInternalServerError, resp)
 		}
 	}
 
@@ -75,6 +71,12 @@ func (h *Handler) UserDeleteAccount(e echo.Context) error {
 
 	id, err := h.usrs.DeleteAccount(r.ID, r.Password)
 	if err != nil {
+		if errors.Is(err, errs.ErrWrongPassword) {
+			logging.Error("wrong password", zap.Any("id", id), zap.String("password typed", r.Password))
+			resp := dto.NewErrorResponse(err, "Wrong password")
+			return e.JSON(http.StatusBadRequest, resp)
+		}
+
 		logging.Error("failed on service operation", zap.Error(err))
 		resp := dto.NewErrorResponse(errs.ErrDeletingUser, "Deletion of user account process failed")
 		return e.JSON(http.StatusUnauthorized, resp)
@@ -96,11 +98,23 @@ func (h *Handler) UserUpdate(e echo.Context) error {
 
 	user, err := h.usrs.UpdateInfo(req.ID, req.Username, req.OldPassword, req.NewPassword, req.Email, req.IsAdmin)
 	if err != nil {
-		logging.Error("DB fail", zap.Error(err))
-		return e.JSON(http.StatusInternalServerError, dto.NewErrorResponse(errs.ErrDB, "Failed to update user info"))
+		switch err {
+		case errs.ErrNoUserFound:
+			logging.Error("No user found", zap.Any("id", req.ID))
+			resp := dto.NewErrorResponse(err, "No user found with provided ID")
+			return e.JSON(http.StatusBadRequest, resp)
+		case errs.ErrWrongPassword:
+			logging.Error("Wrong password", zap.Any("id", req.ID), zap.String("typed password", req.OldPassword), zap.String("real password", user.Password))
+			resp := dto.NewErrorResponse(err, "Wrong password")
+			return e.JSON(http.StatusUnauthorized, resp)
+		default:
+			logging.Error("server-side error", zap.Error(err))
+			resp := dto.NewErrorResponse(errs.ErrDB, "Server error")
+			return e.JSON(http.StatusInternalServerError, resp)
+		}
 	}
 
-	logging.Info("Operation success", zap.Any("new user", user))
+	logging.Info("Operation success", zap.Any("updated user", user))
 	return e.JSON(http.StatusOK, dto.NewOkReponse("user info updated", user))
 }
 

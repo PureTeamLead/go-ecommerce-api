@@ -21,11 +21,17 @@ func main() {
 	// TODO: setup Singleton
 	// TODO: implement validating passwords/username/emails
 	// TODO: write some tests
-	// TODO: create aggregates
 	// TODO: replace closing db to graceful shutdown
+
 	// TODO: implement seller in database
-	// TODO: construct router, middlewares, routes
+	// TODO: create aggregates
+
+	// TODO: middlewares
 	// TODO: add JWT token
+
+	// bugs
+	// TODO: rework user service -> update user(password hashing)
+	// TODO: get all products -> Scan error
 
 	flag.Parse()
 	cfg := config.LoadConfig(*configPath)

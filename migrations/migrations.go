@@ -20,7 +20,7 @@ func PostgreMigrate(db *sql.DB, migFiles fs.FS) error {
 		return fmt.Errorf("driver's fault: %w", err)
 	}
 
-	if err := goose.Up(db, "."); err != nil {
+	if err := goose.Up(db, "postgres-migs"); err != nil {
 		return fmt.Errorf("failed migrations executing: %w", err)
 	}
 

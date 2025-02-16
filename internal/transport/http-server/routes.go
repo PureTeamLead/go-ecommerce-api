@@ -8,8 +8,6 @@ import (
 	"time"
 )
 
-// TODO: for every method below return needed errors(not just errDB, couldn't be find e.g)
-
 type userHandler interface {
 	UserLogin(e echo.Context) error
 	UserRegister(e echo.Context) error
