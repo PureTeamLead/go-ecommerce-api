@@ -1,13 +1,35 @@
 package http_server
 
 import (
-	"eshop/internal/transport/http-server/handlers"
 	"fmt"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 	"net/http"
 	"time"
 )
+
+// TODO: for every method below return needed errors(not just errDB, couldn't be find e.g)
+
+type userHandler interface {
+	UserLogin(e echo.Context) error
+	UserRegister(e echo.Context) error
+	UserDeleteAccount(e echo.Context) error
+	GetAllUsers(e echo.Context) error
+	UserUpdate(e echo.Context) error
+}
+
+type productHandler interface {
+	AddProduct(e echo.Context) error
+	DeleteProduct(e echo.Context) error
+	UpdateProductInfo(e echo.Context) error
+	GetProduct(e echo.Context) error
+	GetAllProducts(e echo.Context) error
+}
+
+type handlerAbs interface {
+	userHandler
+	productHandler
+}
 
 type AppConfig struct {
 	Host        string        `yaml:"serv_host" env-required:"true"`
@@ -19,14 +41,14 @@ type AppConfig struct {
 }
 
 type Router struct {
-	Handler handlers.Handler
+	Handler handlerAbs
 	E       *echo.Echo
 	config  AppConfig
 	logger  *zap.Logger
 	srv     *http.Server
 }
 
-func NewRouter(cfg AppConfig, handler handlers.Handler, logger *zap.Logger) *Router {
+func NewRouter(cfg AppConfig, handler handlerAbs, logger *zap.Logger) *Router {
 	e := echo.New()
 
 	addr := fmt.Sprintf("%s:%s", cfg.Host, cfg.Port)
@@ -37,18 +59,19 @@ func NewRouter(cfg AppConfig, handler handlers.Handler, logger *zap.Logger) *Rou
 		Addr:         addr,
 	}
 
-	// TODO: make routes for id, not methods names
-
-	ug := e.Group("/users")
+	ug := e.Group("/user")
 	ug.POST("/login", handler.UserLogin)
 	ug.POST("/register", handler.UserRegister)
 	ug.DELETE("/delete", handler.UserDeleteAccount)
+	ug.GET("/all", handler.GetAllUsers)
+	ug.PUT("/update", handler.UserUpdate)
 
-	//pg := e.Group("/products")
-	//pg.POST("/add", AddProductHandler)
-	//pg.DELETE("/delete", DeleteProductHandler)
-	//pg.PUT("/update", UpdateProductHandler)
-	//pg.GET("/{id}", GetProductHandler)
+	pg := e.Group("/product")
+	pg.POST("/add", handler.AddProduct)
+	pg.DELETE("/delete", handler.DeleteProduct)
+	pg.PUT("/update", handler.UpdateProductInfo)
+	pg.GET("/get", handler.GetProduct)
+	pg.GET("/all", handler.GetAllProducts)
 
 	return &Router{
 		E:       e,

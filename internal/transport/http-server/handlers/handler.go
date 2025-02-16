@@ -1,25 +1,33 @@
 package handlers
 
 import (
-	"eshop/internal/services"
+	"eshop/internal/domain/entities"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
-// TODO: use err creating user and err updating user
-
-// TODO: add other methods to handler
-
-type Handler interface {
-	UserHandler
-	ProductHandler
+type productService interface {
+	AddProduct(name, category string, price float64) (uuid.UUID, error)
+	DeleteProduct(id uuid.UUID) (uuid.UUID, error)
+	UpdateProduct(id uuid.UUID, name, category string, price float64) (*entities.Product, error)
+	GetProduct(id uuid.UUID) (*entities.Product, error)
+	GetAllProducts() ([]entities.Product, error)
 }
 
-type HandlerStruct struct {
-	usrs   services.UserService
-	prrs   services.ProductService
+type userService interface {
+	Register(username, password string, email string, isAdmin bool) (uuid.UUID, error)
+	Login(id uuid.UUID, username, password string) error
+	DeleteAccount(id uuid.UUID, password string) (uuid.UUID, error)
+	UpdateInfo(id uuid.UUID, username string, oldPassword string, newPassword string, email string, isAdmin bool) (*entities.User, error)
+	GetAll() ([]entities.User, error)
+}
+
+type Handler struct {
+	usrs   userService
+	prrs   productService
 	logger *zap.Logger
 }
 
-func NewHandler(usrs services.UserService, prrs services.ProductService, logger *zap.Logger) Handler {
-	return &HandlerStruct{usrs: usrs, logger: logger, prrs: prrs}
+func NewHandler(usrs userService, prrs productService, logger *zap.Logger) *Handler {
+	return &Handler{usrs: usrs, logger: logger, prrs: prrs}
 }

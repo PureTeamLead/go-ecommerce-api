@@ -11,23 +11,15 @@ import (
 	"github.com/google/uuid"
 )
 
-type ProductRepository interface {
-	Create(product *entities.Product) (uuid.UUID, error)
-	Delete(id uuid.UUID) error
-	GetByID(id uuid.UUID) (*entities.Product, error)
-	GetAll() ([]entities.Product, error)
-	Update(product *entities.Product) error
-}
-
-type productRepository struct {
+type ProductRepository struct {
 	db postgre.DBinteraction
 }
 
-func NewProductRepository(db *sql.DB) ProductRepository {
-	return &productRepository{db: db}
+func NewProductRepository(db *sql.DB) *ProductRepository {
+	return &ProductRepository{db: db}
 }
 
-func (p *productRepository) Create(product *entities.Product) (uuid.UUID, error) {
+func (p *ProductRepository) Create(product *entities.Product) (uuid.UUID, error) {
 	var id uuid.UUID
 
 	const query = `INSERT INTO products(id, price, category, name, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id;`
@@ -40,7 +32,7 @@ func (p *productRepository) Create(product *entities.Product) (uuid.UUID, error)
 	return id, nil
 }
 
-func (p *productRepository) Delete(id uuid.UUID) error {
+func (p *ProductRepository) Delete(id uuid.UUID) error {
 	var returnedID uuid.UUID
 	const query = `DELETE FROM products WHERE id = $1 RETURNING id;`
 
@@ -55,7 +47,7 @@ func (p *productRepository) Delete(id uuid.UUID) error {
 	return nil
 }
 
-func (p *productRepository) GetByID(id uuid.UUID) (*entities.Product, error) {
+func (p *ProductRepository) GetByID(id uuid.UUID) (*entities.Product, error) {
 	var product entities.Product
 	const query = `SELECT id, price, category, name, created_at, updated_at FROM products WHERE id = $1;`
 
@@ -69,7 +61,7 @@ func (p *productRepository) GetByID(id uuid.UUID) (*entities.Product, error) {
 	return &product, nil
 }
 
-func (p *productRepository) GetAll() ([]entities.Product, error) {
+func (p *ProductRepository) GetAll() ([]entities.Product, error) {
 	var products []entities.Product
 	const query = `SELECT id, price, category, name, created_at, updated_at FROM products;`
 
@@ -95,7 +87,7 @@ func (p *productRepository) GetAll() ([]entities.Product, error) {
 	return products, nil
 }
 
-func (p *productRepository) Update(product *entities.Product) error {
+func (p *ProductRepository) Update(product *entities.Product) error {
 	const query = `UPDATE products SET name = $1, price = $2, category = $3, updated_at = $4 WHERE id = $5;`
 
 	_, err := p.db.Exec(query, product.Name, product.Price, product.Category, product.UpdatedAt, product.ID)

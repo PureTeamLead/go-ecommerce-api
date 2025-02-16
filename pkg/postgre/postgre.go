@@ -7,9 +7,6 @@ import (
 	"fmt"
 )
 
-// Optionally could be created models (for gorm e.g)
-// TODO: NewDB to pkg, as argument take cfg, validate data in constructor
-
 type DBinteraction interface {
 	QueryRow(query string, args ...any) *sql.Row
 	QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row

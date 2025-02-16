@@ -6,38 +6,35 @@ import (
 	"eshop/internal/infrastructure/constants"
 	"eshop/internal/infrastructure/errs"
 	"eshop/internal/infrastructure/hashing"
-	"eshop/internal/repositories"
 	"github.com/google/uuid"
 )
 
-//TODO: add methods updateinfo, updatepassword, getallusers
-
-type UserService interface {
-	Register(user *entities.User) (uuid.UUID, error)
-	Login(user *entities.User) error
-	DeleteAccount(user *entities.User) (uuid.UUID, error)
-	UpdateInfo(user *entities.User) (*entities.User, error)
+type userRepository interface {
+	Create(user *entities.User) (uuid.UUID, error)
+	Delete(id uuid.UUID) error
+	GetByID(id uuid.UUID) (*entities.User, error)
 	GetAll() ([]entities.User, error)
+	Update(user *entities.User) error
 }
 
-type userService struct {
-	ur repositories.UserRepository
+type UserService struct {
+	ur userRepository
 }
 
-func NewUserService(userRepo repositories.UserRepository) UserService {
-	return &userService{ur: userRepo}
+func NewUserService(userRepo userRepository) *UserService {
+	return &UserService{ur: userRepo}
 }
 
-func (u *userService) Register(user *entities.User) (uuid.UUID, error) {
+func (u *UserService) Register(username, password string, email string, isAdmin bool) (uuid.UUID, error) {
 	var id uuid.UUID
-	hashedPassword, err := hashing.HashPassword(user.Password)
+	hashedPassword, err := hashing.HashPassword(password)
 	if err != nil {
 		return constants.EmptyID, errs.ErrHashing
 	}
 
-	user.Password = hashedPassword
+	newUser := entities.NewUser(username, hashedPassword, email, isAdmin)
 
-	id, err = u.ur.Create(user)
+	id, err = u.ur.Create(newUser)
 	if err != nil {
 		return constants.EmptyID, errs.ErrDB
 	}
@@ -45,57 +42,63 @@ func (u *userService) Register(user *entities.User) (uuid.UUID, error) {
 	return id, nil
 }
 
-func (u *userService) Login(user *entities.User) error {
-	userDB, err := u.ur.GetByID(user.ID)
+func (u *UserService) Login(id uuid.UUID, username, password string) error {
+	userDB, err := u.ur.GetByID(id)
 	if err != nil {
 		return errs.ErrDB
 	}
 
-	if err = hashing.VerifyPassword(user.Password, userDB.Password); err != nil {
+	if err = hashing.VerifyPassword(password, userDB.Password); err != nil {
 		if errors.Is(err, errs.ErrWrongPassword) {
 			return errs.ErrWrongPassword
 		}
 		return errs.ErrHashing
 	}
 
-	if user.Username != userDB.Username {
+	if username != userDB.Username {
 		return errs.ErrWrongUsername
 	}
 
 	return nil
 }
 
-func (u *userService) DeleteAccount(user *entities.User) (uuid.UUID, error) {
-	userDB, err := u.ur.GetByID(user.ID)
+func (u *UserService) DeleteAccount(id uuid.UUID, password string) (uuid.UUID, error) {
+	userDB, err := u.ur.GetByID(id)
 	if err != nil {
 		return constants.EmptyID, errs.ErrDB
 	}
 
-	if err = hashing.VerifyPassword(user.Password, userDB.Password); err != nil {
-		if errors.Is(err, errs.ErrWrongPassword) {
-			return constants.EmptyID, errs.ErrWrongPassword
-		}
-		return constants.EmptyID, errs.ErrHashing
+	if err = hashing.VerifyPassword(password, userDB.Password); err != nil {
+		return constants.EmptyID, err
 	}
 
-	if err = u.ur.Delete(user.ID); err != nil {
+	if err = u.ur.Delete(id); err != nil {
 		return constants.EmptyID, errs.ErrDeletingUser
 	}
 
-	return user.ID, nil
+	return id, nil
 }
 
-func (u *userService) UpdateInfo(user *entities.User) (*entities.User, error) {
-	updatedUser := entities.UpdateUser(user.ID, user.Username, user.Password, user.Email, user.IsAdmin, user.CreatedAt)
+func (u *UserService) UpdateInfo(id uuid.UUID, username string, oldPassword string, newPassword string, email string, isAdmin bool) (*entities.User, error) {
+	userDB, err := u.ur.GetByID(id)
+	if err != nil {
+		return nil, err
+	}
 
-	if err := u.ur.Update(updatedUser); err != nil {
+	if err = hashing.VerifyPassword(oldPassword, userDB.Password); err != nil {
+		return nil, err
+	}
+
+	updatedUser := entities.UpdateUser(id, username, newPassword, email, isAdmin, userDB.CreatedAt)
+
+	if err = u.ur.Update(updatedUser); err != nil {
 		return nil, err
 	}
 
 	return updatedUser, nil
 }
 
-func (u *userService) GetAll() ([]entities.User, error) {
+func (u *UserService) GetAll() ([]entities.User, error) {
 	users, err := u.ur.GetAll()
 	if err != nil {
 		return nil, err

@@ -11,25 +11,15 @@ import (
 	"github.com/google/uuid"
 )
 
-type UserRepository interface {
-	Create(user *entities.User) (uuid.UUID, error)
-	Delete(id uuid.UUID) error
-	GetByID(id uuid.UUID) (*entities.User, error)
-	GetAll() ([]entities.User, error)
-	Update(user *entities.User) error
-}
-
-// TODO: create model(request) to communicate with service
-
-type userRepository struct {
+type UserRepository struct {
 	db postgre.DBinteraction
 }
 
-func NewUserRepository(db *sql.DB) UserRepository {
-	return &userRepository{db: db}
+func NewUserRepository(db *sql.DB) *UserRepository {
+	return &UserRepository{db: db}
 }
 
-func (u *userRepository) Create(user *entities.User) (uuid.UUID, error) {
+func (u *UserRepository) Create(user *entities.User) (uuid.UUID, error) {
 	var id uuid.UUID
 
 	const query = `INSERT INTO users(id, username, password, email, isadmin, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id;`
@@ -42,7 +32,7 @@ func (u *userRepository) Create(user *entities.User) (uuid.UUID, error) {
 	return id, nil
 }
 
-func (u *userRepository) GetByID(id uuid.UUID) (*entities.User, error) {
+func (u *UserRepository) GetByID(id uuid.UUID) (*entities.User, error) {
 	var user entities.User
 	const query = `SELECT id, username, password, email, isadmin, created_at, updated_at FROM users WHERE id = $1;`
 
@@ -56,7 +46,7 @@ func (u *userRepository) GetByID(id uuid.UUID) (*entities.User, error) {
 	return &user, nil
 }
 
-func (u *userRepository) GetAll() ([]entities.User, error) {
+func (u *UserRepository) GetAll() ([]entities.User, error) {
 	var users []entities.User
 	const query = `SELECT id, username, password, email, isadmin, created_at, updated_at FROM users;`
 
@@ -82,7 +72,7 @@ func (u *userRepository) GetAll() ([]entities.User, error) {
 	return users, nil
 }
 
-func (u *userRepository) Delete(id uuid.UUID) error {
+func (u *UserRepository) Delete(id uuid.UUID) error {
 	var returnedID uuid.UUID
 	const query = `DELETE FROM users WHERE id = $1 RETURNING id;`
 
@@ -97,7 +87,7 @@ func (u *userRepository) Delete(id uuid.UUID) error {
 	return nil
 }
 
-func (u *userRepository) Update(user *entities.User) error {
+func (u *UserRepository) Update(user *entities.User) error {
 	const query = `UPDATE users SET username = $1, password = $2, email = $3, isadmin = $4, updated_at = $5 WHERE id = $6;`
 
 	_, err := u.db.Exec(query, user.Username, user.Password, user.Email,

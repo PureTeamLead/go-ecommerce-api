@@ -16,10 +16,12 @@ type Login struct {
 }
 
 type UpdateUserInfo struct {
-	ID       uuid.UUID `json:"id"`
-	Username string    `json:"username"`
-	Email    string    `json:"email"`
-	IsAdmin  bool      `json:"is_admin"`
+	ID          uuid.UUID `json:"id"`
+	Username    string    `json:"username"`
+	OldPassword string    `json:"old_password"`
+	NewPassword string    `json:"new_password"`
+	Email       string    `json:"email"`
+	IsAdmin     bool      `json:"is_admin"`
 }
 
 type DeleteUser struct {

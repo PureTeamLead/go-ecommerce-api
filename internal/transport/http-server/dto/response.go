@@ -1,8 +1,9 @@
 package dto
 
 type Response struct {
-	Error error
-	Msg   string
+	Error    error
+	Msg      string
+	Attached interface{}
 }
 
 func NewErrorResponse(err error, errMsg string) Response {
@@ -12,9 +13,10 @@ func NewErrorResponse(err error, errMsg string) Response {
 	}
 }
 
-func NewOkReponse(msg string) Response {
+func NewOkReponse(msg string, attach interface{}) Response {
 	return Response{
-		Error: nil,
-		Msg:   msg,
+		Error:    nil,
+		Msg:      msg,
+		Attached: attach,
 	}
 }

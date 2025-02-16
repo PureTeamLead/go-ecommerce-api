@@ -18,13 +18,14 @@ var (
 )
 
 func main() {
-	// TODO: add some getters and setters(if needed)
 	// TODO: setup Singleton
 	// TODO: implement validating passwords/username/emails
 	// TODO: write some tests
-	// TODO: use logger only on high level -> delete from repositories, services
-	// TODO: write graceful shutdown
 	// TODO: create aggregates
+	// TODO: replace closing db to graceful shutdown
+	// TODO: implement seller in database
+	// TODO: construct router, middlewares, routes
+	// TODO: add JWT token
 
 	flag.Parse()
 	cfg := config.LoadConfig(*configPath)
@@ -39,7 +40,6 @@ func main() {
 	if err != nil {
 		logger.Fatal("connecting db:", zap.Error(err))
 	}
-	// TODO: replace closing db to graceful shutdown
 	defer db.Close()
 
 	logger.Info("Database is successfully connected")
@@ -48,7 +48,6 @@ func main() {
 		logger.Fatal("migrations fault", zap.Error(err))
 	}
 
-	// TODO: implement seller in database
 	userRepository := repositories.NewUserRepository(db)
 	productRepository := repositories.NewProductRepository(db)
 
@@ -56,8 +55,7 @@ func main() {
 	productService := services.NewProductService(productRepository)
 
 	handler := handlers.NewHandler(userService, productService, logger)
-	// TODO: construct router, middlewares, routes
-	// TODO: add JWT token
+
 	r := httpServer.NewRouter(cfg.App, handler, logger)
 	r.Run()
 }
