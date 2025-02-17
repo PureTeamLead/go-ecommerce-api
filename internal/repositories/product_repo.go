@@ -51,7 +51,7 @@ func (p *ProductRepository) GetByID(id uuid.UUID) (*entities.Product, error) {
 	var product entities.Product
 	const query = `SELECT id, price, category, name, created_at, updated_at FROM products WHERE id = $1;`
 
-	err := p.db.QueryRow(query, id).Scan(&product)
+	err := p.db.QueryRow(query, id).Scan(&product.ID, &product.Price, &product.Category, &product.Name, &product.Category, &product.UpdatedAt)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, errs.ErrNoProductFound
 	} else if err != nil {
@@ -73,7 +73,7 @@ func (p *ProductRepository) GetAll() ([]entities.Product, error) {
 
 	for rows.Next() {
 		var product entities.Product
-		err = rows.Scan(&product)
+		err = rows.Scan(&product.ID, &product.Price, &product.Category, &product.Name, &product.CreatedAt, &product.UpdatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan structs: %w", err)
 		}

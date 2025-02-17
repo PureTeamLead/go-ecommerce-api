@@ -2,12 +2,12 @@ package main
 
 import (
 	"eshop/internal/infrastructure/config"
-	logging "eshop/internal/infrastructure/logger"
 	"eshop/internal/repositories"
 	"eshop/internal/services"
 	httpServer "eshop/internal/transport/http-server"
 	"eshop/internal/transport/http-server/handlers"
 	"eshop/migrations"
+	logging "eshop/pkg/logger"
 	"eshop/pkg/postgre"
 	"flag"
 	"go.uber.org/zap"
@@ -28,10 +28,6 @@ func main() {
 
 	// TODO: middlewares
 	// TODO: add JWT token
-
-	// bugs
-	// TODO: rework user service -> update user(password hashing)
-	// TODO: get all products -> Scan error
 
 	flag.Parse()
 	cfg := config.LoadConfig(*configPath)
@@ -60,7 +56,7 @@ func main() {
 	userService := services.NewUserService(userRepository)
 	productService := services.NewProductService(productRepository)
 
-	handler := handlers.NewHandler(userService, productService, logger)
+	handler := handlers.NewHandler(userService, productService, logger, cfg.App.SecretJWT)
 
 	r := httpServer.NewRouter(cfg.App, handler, logger)
 	r.Run()

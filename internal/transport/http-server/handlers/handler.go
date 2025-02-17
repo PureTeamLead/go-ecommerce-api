@@ -23,11 +23,12 @@ type userService interface {
 }
 
 type Handler struct {
-	usrs   userService
-	prrs   productService
-	logger *zap.Logger
+	usrs       userService
+	prrs       productService
+	logger     *zap.Logger
+	signingKey string
 }
 
-func NewHandler(usrs userService, prrs productService, logger *zap.Logger) *Handler {
-	return &Handler{usrs: usrs, logger: logger, prrs: prrs}
+func NewHandler(usrs userService, prrs productService, logger *zap.Logger, jwtToken string) *Handler {
+	return &Handler{usrs: usrs, logger: logger, prrs: prrs, signingKey: jwtToken}
 }

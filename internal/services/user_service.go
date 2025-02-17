@@ -5,7 +5,7 @@ import (
 	"eshop/internal/domain/entities"
 	"eshop/internal/infrastructure/constants"
 	"eshop/internal/infrastructure/errs"
-	"eshop/internal/infrastructure/hashing"
+	"eshop/pkg/hashing"
 	"github.com/google/uuid"
 )
 
@@ -89,7 +89,12 @@ func (u *UserService) UpdateInfo(id uuid.UUID, username string, oldPassword stri
 		return nil, err
 	}
 
-	updatedUser := entities.UpdateUser(id, username, newPassword, email, isAdmin, userDB.CreatedAt)
+	hashedPassword, err := hashing.HashPassword(newPassword)
+	if err != nil {
+		return nil, err
+	}
+
+	updatedUser := entities.UpdateUser(id, username, hashedPassword, email, isAdmin, userDB.CreatedAt)
 
 	if err = u.ur.Update(updatedUser); err != nil {
 		return nil, err

@@ -2,6 +2,7 @@ package constants
 
 import (
 	"github.com/google/uuid"
+	"time"
 )
 
 var (
@@ -10,8 +11,7 @@ var (
 
 const (
 	PostgresDriver = "postgres"
-)
-
-const (
-	HashCost = 12
+	MigrationsPath = "postgres-migs"
+	HashCost       = 12
+	ExpTime        = time.Minute
 )

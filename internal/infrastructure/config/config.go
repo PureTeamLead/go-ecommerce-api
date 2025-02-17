@@ -11,16 +11,19 @@ import (
 
 type Config struct {
 	Env string               `yaml:"env" env-default:"prod"`
-	DB  postgre.DBconfig     `yaml:"db"`
-	App httpServer.AppConfig `yaml:"app"`
+	DB  postgre.DBconfig     `yaml:"db" env-required:"true"`
+	App httpServer.AppConfig `yaml:"app" env-required:"true"`
 }
 
 func LoadConfig(path string) *Config {
 	var cfg Config
 
-	err := cleanenv.ReadConfig(path, &cfg)
-	if err != nil {
-		log.Fatal("error loading config: " + err.Error())
+	if err := cleanenv.ReadConfig(path, &cfg); err != nil {
+		log.Fatal("error loading config file: " + err.Error())
+	}
+
+	if err := cleanenv.ReadEnv(&cfg); err != nil {
+		log.Fatal("error loading env variables: " + err.Error())
 	}
 
 	return &cfg

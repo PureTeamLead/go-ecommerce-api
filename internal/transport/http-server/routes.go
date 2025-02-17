@@ -33,9 +33,10 @@ type AppConfig struct {
 	Host        string        `yaml:"serv_host" env-required:"true"`
 	Port        string        `yaml:"serv_port" env-required:"true"`
 	Username    string        `yaml:"serv_username" env-required:"true"`
-	Password    string        `yaml:"serv_password" env-required:"true" env:"HTTP_USER_PASSWORD"`
+	Password    string        `env-required:"true" env:"HTTP_USER_PASSWORD"`
 	RWTimeout   time.Duration `yaml:"rw_timeout" env-required:"true"`
 	IdleTimeout time.Duration `yaml:"idle_timeout" env-required:"true"`
+	SecretJWT   string        `env:"SECRET_JWT_KEY"`
 }
 
 type Router struct {

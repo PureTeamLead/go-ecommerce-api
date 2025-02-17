@@ -11,6 +11,5 @@ app:
   serv_host: "localhost"
   serv_port: "7777"
   serv_username: "banger"
-  serv_password: "4321"
   rw_timeout: 4s
   idle_timeout: 60s
