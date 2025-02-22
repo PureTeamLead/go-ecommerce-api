@@ -1,7 +1,7 @@
 env: "dev" #available envs: "dev", "prod"
 db:
-  username: "themaxs"
-  password: "1234"
+  username: "Your_name"
+  password: "your_password"
   host: "localhost"
   port: "5432"
   database: "e_commerce"
@@ -10,6 +10,6 @@ db:
 app:
   serv_host: "localhost"
   serv_port: "7777"
-  serv_username: "banger"
+  serv_username: "username"
   rw_timeout: 4s
   idle_timeout: 60s
