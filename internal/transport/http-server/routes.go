@@ -1,6 +1,7 @@
 package http_server
 
 import (
+	"context"
 	"fmt"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -14,6 +15,7 @@ type userHandler interface {
 	UserDeleteAccount(e echo.Context) error
 	GetAllUsers(e echo.Context) error
 	UserUpdate(e echo.Context) error
+	CheckJWT(next echo.HandlerFunc) echo.HandlerFunc
 }
 
 type productHandler interface {
@@ -61,15 +63,16 @@ func NewRouter(cfg AppConfig, handler handlerAbs, logger *zap.Logger) *Router {
 	ug := e.Group("/user")
 	ug.POST("/login", handler.UserLogin)
 	ug.POST("/register", handler.UserRegister)
-	ug.DELETE("/delete", handler.UserDeleteAccount)
+	ug.DELETE("/delete", handler.UserDeleteAccount, handler.CheckJWT)
 	ug.GET("/all", handler.GetAllUsers)
-	ug.PUT("/update", handler.UserUpdate)
+	ug.PUT("/update", handler.UserUpdate, handler.CheckJWT)
 
-	pg := e.Group("/product")
+	e.GET("/getProduct", handler.GetProduct)
+
+	pg := e.Group("/product", handler.CheckJWT)
 	pg.POST("/add", handler.AddProduct)
 	pg.DELETE("/delete", handler.DeleteProduct)
 	pg.PUT("/update", handler.UpdateProductInfo)
-	pg.GET("/get", handler.GetProduct)
 	pg.GET("/all", handler.GetAllProducts)
 
 	return &Router{
@@ -81,6 +84,19 @@ func NewRouter(cfg AppConfig, handler handlerAbs, logger *zap.Logger) *Router {
 	}
 }
 
+func (r *Router) Shutdown() {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+
+	if err := r.E.Shutdown(ctx); err != nil {
+		r.logger.Error("server shutdown failed", zap.Error(err))
+	}
+}
+
 func (r *Router) Run() {
-	r.logger.Fatal("Shutting down the server", zap.Error(r.E.StartServer(r.srv)))
+	err := r.E.StartServer(r.srv)
+	if err != nil {
+		r.logger.Error("Failed server serving", zap.Error(err))
+		return
+	}
 }

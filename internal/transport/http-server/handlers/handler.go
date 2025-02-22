@@ -32,3 +32,7 @@ type Handler struct {
 func NewHandler(usrs userService, prrs productService, logger *zap.Logger, jwtToken string) *Handler {
 	return &Handler{usrs: usrs, logger: logger, prrs: prrs, signingKey: jwtToken}
 }
+
+func (h *Handler) GetSigningKey() string {
+	return h.signingKey
+}

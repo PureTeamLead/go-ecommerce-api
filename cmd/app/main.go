@@ -2,6 +2,7 @@ package main
 
 import (
 	"eshop/internal/infrastructure/config"
+	"eshop/internal/infrastructure/shutdown"
 	"eshop/internal/repositories"
 	"eshop/internal/services"
 	httpServer "eshop/internal/transport/http-server"
@@ -18,22 +19,11 @@ var (
 )
 
 func main() {
-	// TODO: setup Singleton
-	// TODO: implement validating passwords/username/emails
-	// TODO: write some tests
-	// TODO: replace closing db to graceful shutdown
-
-	// TODO: implement seller in database
-	// TODO: create aggregates
-
-	// TODO: middlewares
-	// TODO: add JWT token
 
 	flag.Parse()
 	cfg := config.LoadConfig(*configPath)
 
 	logger := logging.NewLogger(cfg.Env)
-	defer logger.Sync()
 
 	logger.Info("Logger is successfully set up",
 		zap.String("env", cfg.Env))
@@ -42,7 +32,6 @@ func main() {
 	if err != nil {
 		logger.Fatal("connecting db:", zap.Error(err))
 	}
-	defer db.Close()
 
 	logger.Info("Database is successfully connected")
 
@@ -59,5 +48,8 @@ func main() {
 	handler := handlers.NewHandler(userService, productService, logger, cfg.App.SecretJWT)
 
 	r := httpServer.NewRouter(cfg.App, handler, logger)
-	r.Run()
+
+	go r.Run()
+
+	shutdown.Stop(db, logger, r.Shutdown)
 }

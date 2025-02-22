@@ -9,6 +9,8 @@ var (
 	ErrNoUserFound   = errors.New("no user found")
 	ErrDeletingUser  = errors.New("failed to delete user")
 	ErrUpdatingUser  = errors.New("failed to update user's info")
+	ErrInvalidEmail  = errors.New("invalid email")
+	ErrBadPassword   = errors.New("bad password ")
 )
 
 var (

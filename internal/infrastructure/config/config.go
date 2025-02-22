@@ -7,8 +7,6 @@ import (
 	"log"
 )
 
-//TODO: make env-required and env-default, validation
-
 type Config struct {
 	Env string               `yaml:"env" env-default:"prod"`
 	DB  postgre.DBconfig     `yaml:"db" env-required:"true"`

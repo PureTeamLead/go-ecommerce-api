@@ -1,6 +1,9 @@
 package entities
 
 import (
+	"eshop/internal/infrastructure/errs"
+	"github.com/badoux/checkmail"
+	"github.com/go-passwd/validator"
 	"github.com/google/uuid"
 	"time"
 )
@@ -17,8 +20,6 @@ type User struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
-
-// TODO: implement validation on creating and updating
 
 func NewUser(username string, password string, email string, isAdmin bool) *User {
 	return &User{
@@ -42,4 +43,17 @@ func UpdateUser(id uuid.UUID, username string, password string, email string, is
 		CreatedAt: createdAt,
 		UpdatedAt: time.Now(),
 	}
+}
+
+func ValidateUser(email string, password string) error {
+	if err := checkmail.ValidateFormat(email); err != nil {
+		return errs.ErrInvalidEmail
+	}
+
+	pswdValidator := validator.New(validator.MinLength(8, nil))
+	if err := pswdValidator.Validate(password); err != nil {
+		return errs.ErrBadPassword
+	}
+
+	return nil
 }

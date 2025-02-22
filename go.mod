@@ -3,6 +3,9 @@ module eshop
 go 1.23.3
 
 require (
+	github.com/badoux/checkmail v1.2.4
+	github.com/go-passwd/validator v0.0.0-20180902184246-0b4c967e436b
+	github.com/golang-jwt/jwt/v4 v4.5.1
 	github.com/google/uuid v1.6.0
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/labstack/echo/v4 v4.13.3

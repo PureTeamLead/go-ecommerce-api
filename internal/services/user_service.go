@@ -27,6 +27,11 @@ func NewUserService(userRepo userRepository) *UserService {
 
 func (u *UserService) Register(username, password string, email string, isAdmin bool) (uuid.UUID, error) {
 	var id uuid.UUID
+
+	if err := entities.ValidateUser(email, password); err != nil {
+		return constants.EmptyID, err
+	}
+
 	hashedPassword, err := hashing.HashPassword(password)
 	if err != nil {
 		return constants.EmptyID, errs.ErrHashing
@@ -86,6 +91,10 @@ func (u *UserService) UpdateInfo(id uuid.UUID, username string, oldPassword stri
 	}
 
 	if err = hashing.VerifyPassword(oldPassword, userDB.Password); err != nil {
+		return nil, err
+	}
+
+	if err = entities.ValidateUser(email, newPassword); err != nil {
 		return nil, err
 	}
 

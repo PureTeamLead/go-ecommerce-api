@@ -2,9 +2,12 @@ package handlers
 
 import (
 	"errors"
+	"eshop/internal/infrastructure/constants"
 	"eshop/internal/infrastructure/errs"
+	token "eshop/internal/infrastructure/jwt-token"
 	"eshop/internal/transport/http-server/dto"
 	"eshop/internal/transport/http-server/dto/requests"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 	"net/http"
@@ -35,6 +38,25 @@ func (h *Handler) UserLogin(e echo.Context) error {
 	}
 
 	logging.Info("Logged in user", zap.Any("id", r.ID))
+
+	// JWT token
+	newToken, err := token.GenerateJWT(r.ID, h.signingKey)
+	if err != nil {
+		logging.Error("generate token", zap.Error(err))
+		resp := dto.NewErrorResponse(err, "Failed generating authentication token")
+		return e.JSON(http.StatusInternalServerError, resp)
+	}
+	logging.Info("Generated token", zap.String("token", newToken))
+
+	authCookie := &http.Cookie{
+		Name:     "JWT token",
+		HttpOnly: true,
+		Value:    newToken,
+	}
+
+	e.SetCookie(authCookie)
+	logging.Info("Generated cookie and set")
+
 	return e.JSON(http.StatusOK, dto.NewOkReponse("Successfully logged in, id", r.ID))
 }
 
@@ -129,4 +151,24 @@ func (h *Handler) GetAllUsers(e echo.Context) error {
 
 	logging.Info("Operation success", zap.Any("users", users))
 	return e.JSON(http.StatusOK, dto.NewOkReponse("all users fetched", users))
+}
+
+func (h *Handler) CheckJWT(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(e echo.Context) error {
+		authCookie, err := e.Cookie(constants.CookieJWT)
+		if err != nil {
+			h.logger.Error("Couldn't get authentication cookie", zap.Error(err))
+			resp := dto.NewErrorResponse(err, "Failed to get needed cookie")
+			return e.JSON(http.StatusInternalServerError, resp)
+		}
+
+		realToken, err := token.ValidateJWT(authCookie.Value, h.GetSigningKey())
+		if err != nil {
+			h.logger.Error("Wrong JWT token", zap.Error(err))
+			return e.Redirect(http.StatusUnauthorized, "/user/login")
+		}
+
+		h.logger.Info("User got access to protected route", zap.String("user_id", realToken.Claims.(jwt.MapClaims)["user_id"].(string)))
+		return next(e)
+	}
 }
